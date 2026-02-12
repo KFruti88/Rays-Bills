@@ -4,150 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Ray's Budget Overview</title>
+    <title>Ray's Budget Hub</title>
     <style>
         :root {
-            --bg-dark: #050505;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --green: #b6d7a8; /* From your sheet */
-            --red: #ea9999;   /* From your sheet */
-            --blue: #cfe2f3;  /* From your sheet */
+            --bg: #050505;
+            --green: #b6d7a8; 
+            --red: #ea9999;   
             --text: #ffffff;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
             color: var(--text);
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .container {
-            width: 90%; /* Standard 90% width */
-            max-width: 500px;
-        }
+        .container { width: 95%; max-width: 450px; }
 
-        h2 {
-            text-align: center;
-            color: var(--green);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .bill-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-
-        .bill-card:active {
-            transform: scale(0.98);
-        }
-
-        .label {
-            font-weight: bold;
-            font-size: 1.1rem;
-            text-transform: capitalize;
-        }
-
-        .amount {
-            font-family: 'Courier New', monospace;
-            font-size: 1.2rem;
-        }
-
-        /* Color classes based on your sheet logic */
-        .income { border-left: 5px solid var(--green); }
-        .expense { border-left: 5px solid var(--red); }
-        .split { border-left: 5px solid var(--blue); }
-
-        .summary-box {
-            background: rgba(182, 215, 168, 0.2);
-            padding: 20px;
-            border-radius: 15px;
+        .header {
+            border: 2px solid var(--green);
+            border-radius: 20px;
+            padding: 30px 10px;
             text-align: center;
             margin-bottom: 25px;
-            border: 1px solid var(--green);
+            background: rgba(182, 215, 168, 0.05);
         }
 
-        .loading {
-            text-align: center;
-            margin-top: 50px;
-            font-style: italic;
-            color: #888;
+        .price { font-size: 3.5rem; font-weight: 900; color: var(--green); margin: 10px 0; }
+        .label { font-size: 0.7rem; text-transform: uppercase; color: #888; letter-spacing: 2px; }
+
+        .bill-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        .bill-name { color: #eee; }
+        .bill-val { color: var(--red); font-family: monospace; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Financial Tracker</h2>
-        <div id="summary"></div>
-        <div id="bill-list"><div class="loading">Fetching latest data...</div></div>
+        <div class="header">
+            <div class="label">Current Monthly Income (C2)</div>
+            <div class="price" id="target-c2">Loading...</div>
+        </div>
+
+        <div id="bill-list"></div>
     </div>
 
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSrB-ETsmpGrefh9bQ-g2qy3BC6OyAKGFXHLwerPD_t4iBulrGz5gzaPCzEswBbKoCLuk24YRcDz5T_/pub?output=csv';
 
-        async function fetchBudget() {
+        async function update() {
             try {
                 const response = await fetch(csvUrl);
                 const data = await response.text();
-                const rows = data.split('\n').map(row => row.split(','));
-                
-                renderCards(rows);
-            } catch (error) {
-                document.getElementById('bill-list').innerHTML = "Error loading data. Check CSV permissions.";
+                const rows = data.split('\n').map(r => r.split(','));
+
+                // TARGET C2: Row 2, Column C (Index 1, 2)
+                const c2Value = rows[1][2] ? rows[1][2].replace(/"/g, '').trim() : "$0.00";
+                document.getElementById('target-c2').innerText = c2Value;
+
+                // LIST BILLS: Rows 4-12 (Index 3-11)
+                const list = document.getElementById('bill-list');
+                list.innerHTML = '';
+                for (let i = 3; i <= 11; i++) {
+                    if (rows[i]) {
+                        const name = rows[i][0].replace(/"/g, '').trim();
+                        const amt = rows[i][1].replace(/"/g, '').trim();
+                        if (name && amt && amt !== "0" && amt !== "$0.00") {
+                            list.innerHTML += `
+                                <div class="bill-card">
+                                    <span class="bill-name">${name}</span>
+                                    <span class="bill-val">-${amt}</span>
+                                </div>`;
+                        }
+                    }
+                }
+            } catch (e) {
+                document.getElementById('target-c2').innerText = "OFFLINE";
             }
         }
 
-        function renderCards(rows) {
-            const listContainer = document.getElementById('bill-list');
-            const summaryContainer = document.getElementById('summary');
-            listContainer.innerHTML = '';
-            
-            // Assuming Row 1 is Pay (Income)
-            // Assuming Row 2 is Total Expenses
-            
-            rows.forEach((row, index) => {
-                // Skip empty rows or headers if they don't have data
-                if (!row[0] || row[0].trim() === "" || index === 0) return;
-
-                const name = row[0].replace(/"/g, '');
-                const monthlyTotal = row[1] ? row[1].replace(/"/g, '') : 'N/A';
-                const biweeklySplit = row[2] ? row[2].replace(/"/g, '') : '';
-
-                // Create Card
-                const card = document.createElement('div');
-                card.className = 'bill-card';
-                
-                // Logic for coloring cards
-                if (name.toLowerCase().includes('pay')) card.classList.add('income');
-                else if (biweeklySplit && biweeklySplit.includes('$')) card.classList.add('split');
-                else card.classList.add('expense');
-
-                card.innerHTML = `
-                    <div class="label">${name}</div>
-                    <div class="amount">${monthlyTotal}</div>
-                `;
-
-                listContainer.appendChild(card);
-            });
-        }
-
-        fetchBudget();
+        update();
     </script>
 </body>
 </html>

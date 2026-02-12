@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Ray's Budget Hub</title>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Ray's Budget</title>
     <style>
         :root {
             --bg: #050505;
@@ -17,46 +19,49 @@
             font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            margin: 0; padding: 15px;
-            display: flex; flex-direction: column; align-items: center;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .container { width: 95%; max-width: 450px; }
+        .container { width: 90%; max-width: 400px; }
 
-        .header {
+        /* The Big Total - EXACTLY C2 */
+        .total-box {
             border: 2px solid var(--green);
             border-radius: 20px;
-            padding: 30px 10px;
+            padding: 40px 10px;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             background: rgba(182, 215, 168, 0.05);
         }
 
-        .price { font-size: 3.5rem; font-weight: 900; color: var(--green); margin: 10px 0; }
-        .label { font-size: 0.7rem; text-transform: uppercase; color: #888; letter-spacing: 2px; }
+        .label { font-size: 0.8rem; text-transform: uppercase; color: #888; }
+        .big-price { font-size: 3.5rem; font-weight: 900; color: var(--green); margin: 10px 0; }
 
-        .bill-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
+        /* The Bills - Rows 4-12 */
+        .bill-item {
             display: flex;
             justify-content: space-between;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            margin-bottom: 8px;
+            border-radius: 12px;
         }
-
-        .bill-name { color: #eee; }
-        .bill-val { color: var(--red); font-family: monospace; font-weight: bold; }
+        .bill-price { color: var(--red); font-family: monospace; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="header">
-            <div class="label">Current Monthly Income (C2)</div>
-            <div class="price" id="target-c2">Loading...</div>
+        <div class="total-box">
+            <div class="label">Total Monthly Income</div>
+            <div class="big-price" id="c2-target">Loading...</div>
         </div>
 
+        <div class="label" style="margin-bottom:10px;">Current Bills</div>
         <div id="bill-list"></div>
     </div>
 
@@ -67,30 +72,26 @@
             try {
                 const response = await fetch(csvUrl);
                 const data = await response.text();
-                const rows = data.split('\n').map(r => r.split(','));
+                const rows = data.split('\n').map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
 
-                // TARGET C2: Row 2, Column C (Index 1, 2)
-                const c2Value = rows[1][2] ? rows[1][2].replace(/"/g, '').trim() : "$0.00";
-                document.getElementById('target-c2').innerText = c2Value;
+                // TARGET C2: Row Index 1, Column Index 2
+                // This is the SUM(B2,B3) value.
+                document.getElementById('c2-target').innerText = rows[1][2];
 
-                // LIST BILLS: Rows 4-12 (Index 3-11)
+                // TARGET BILLS: Rows 4 to 12 (Index 3 to 11)
                 const list = document.getElementById('bill-list');
                 list.innerHTML = '';
                 for (let i = 3; i <= 11; i++) {
-                    if (rows[i]) {
-                        const name = rows[i][0].replace(/"/g, '').trim();
-                        const amt = rows[i][1].replace(/"/g, '').trim();
-                        if (name && amt && amt !== "0" && amt !== "$0.00") {
-                            list.innerHTML += `
-                                <div class="bill-card">
-                                    <span class="bill-name">${name}</span>
-                                    <span class="bill-val">-${amt}</span>
-                                </div>`;
-                        }
+                    if (rows[i] && rows[i][0] && rows[i][1]) {
+                        list.innerHTML += `
+                            <div class="bill-item">
+                                <span>${rows[i][0]}</span>
+                                <span class="bill-price">-${rows[i][1]}</span>
+                            </div>`;
                     }
                 }
             } catch (e) {
-                document.getElementById('target-c2').innerText = "OFFLINE";
+                document.getElementById('c2-target').innerText = "ERROR";
             }
         }
 

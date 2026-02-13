@@ -8,9 +8,11 @@
     <style>
         :root {
             --bg: #050505;
-            --green: #b6d7a8;
-            --accent: #00ffcc;
-            --red: #ff4444;
+            --green: #00ff66; /* Bright Green for Pay */
+            --light-red: #ff8888; /* Light Red for Bills */
+            --blue: #00ccff; /* Electric Blue for Games */
+            --tmobile: #ff00bf; /* Pink */
+            --verizon: #ff0000; /* Red */
             --text: #ffffff;
         }
 
@@ -24,74 +26,129 @@
 
         .container { width: 100%; max-width: 450px; }
 
-        /* HERO: PAY */
-        .hero-box {
+        /* GLOSSY CARD BASE */
+        .glossy-card {
+            border-radius: 20px;
+            padding: 20px;
             text-align: center;
-            padding: 50px 10px;
-            border: 4px solid var(--green);
-            border-radius: 25px;
-            background: rgba(182, 215, 168, 0.05);
-            margin-bottom: 25px;
-            box-shadow: 0 0 30px rgba(182, 215, 168, 0.15);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 10px 20px rgba(0,0,0,0.5);
+            border-top: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
         }
-        .hero-label { font-size: 1.2rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: 700; margin-bottom: 5px; }
-        .hero-value { font-size: 4.5rem; font-weight: 900; color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(182, 215, 168, 0.2); }
 
-        /* GRID: LEFT & PHONE */
+        /* 1. HERO: PAY (GREEN) */
+        .hero-box {
+            padding: 35px 10px;
+            border-bottom: 4px solid var(--green);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 0 30px rgba(0, 255, 102, 0.2);
+        }
+        .hero-label { font-size: 1.2rem; text-transform: uppercase; color: #aaa; letter-spacing: 3px; font-weight: 700; margin-bottom: 5px; }
+        .hero-value { font-size: 4rem; font-weight: 900; color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(0, 255, 102, 0.4); }
+
+        /* 2. THE GRID */
         .stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px 5px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        /* MONTHLY BILLS (LIGHT RED) */
+        .card-bills { 
+            border-bottom: 3px solid var(--light-red); 
         }
+        .bills-val { color: var(--light-red); text-shadow: 0 0 15px rgba(255, 136, 136, 0.3); }
+
+        /* TOTAL LEFT (Green - Matches Pay) */
+        .card-left { 
+            border-bottom: 3px solid var(--green); 
+        }
+        .left-val { color: var(--green); }
+
+        /* PHONE (PINK/RED BLEND) */
+        .card-phone { 
+            grid-column: span 2; 
+            /* Gradient Border for the Blend */
+            border-bottom: 4px solid transparent;
+            border-image: linear-gradient(to right, var(--tmobile), var(--verizon)) 1;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 30px;
+        }
+        /* Gradient Text for Phone Value */
+        .phone-val {
+            background: linear-gradient(to right, var(--tmobile), var(--verizon));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
         .stat-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
         .stat-value { font-size: 1.8rem; font-weight: 800; }
 
-        /* ALERT: GAMES */
-        .alert-box {
-            background: rgba(255, 68, 68, 0.15);
-            border: 4px solid var(--red);
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(255, 68, 68, 0.2);
+        /* 3. ALERT: MOBILE GAMES (BLUE PULSE) */
+        @keyframes bluePulse {
+            0% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 0 20px rgba(0, 204, 255, 0.3); border-color: var(--blue); }
+            50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 0 50px rgba(0, 204, 255, 0.6); border-color: #55ddff; }
+            100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 0 20px rgba(0, 204, 255, 0.3); border-color: var(--blue); }
         }
-        .alert-label { font-size: 1.1rem; font-weight: 900; color: var(--red); text-transform: uppercase; }
-        .alert-value { font-size: 3rem; font-weight: 900; color: #ffffff; }
+
+        .alert-box {
+            padding: 30px 20px;
+            border: 4px solid var(--blue);
+            background: linear-gradient(135deg, rgba(0, 204, 255, 0.15) 0%, rgba(0, 204, 255, 0.02) 100%);
+            animation: bluePulse 2s infinite ease-in-out;
+        }
+        .alert-label { 
+            font-size: 1.3rem; font-weight: 900; color: var(--blue); text-transform: uppercase; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .alert-label::before { content: '🎮 '; margin-right: 8px; filter: drop-shadow(0 0 5px var(--blue)); }
+        .alert-value { 
+            font-size: 3.5rem; font-weight: 900; color: #ffffff; 
+            text-shadow: 0 0 30px var(--blue);
+        }
+        .alert-subtext {
+            margin-top: 10px; font-size: 0.9rem; color: #88eeff; font-weight: bold; 
+            text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid rgba(0, 204, 255, 0.3); padding-top: 10px;
+        }
 
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="hero-box">
+        
+        <div class="glossy-card hero-box">
             <div class="hero-label">Pay</div>
             <div class="hero-value" id="val-income">Loading...</div>
         </div>
 
         <div class="stat-grid">
-            <div class="stat-card" style="border-color: var(--green);">
-                <div class="stat-label">Total Left</div>
-                <div class="stat-value" id="val-left" style="color: var(--green);">---</div>
+            <div class="glossy-card card-bills">
+                <div class="stat-label">Monthly Bills</div>
+                <div class="stat-value bills-val" id="val-bills">---</div>
             </div>
-            <div class="stat-card" style="border-color: var(--accent);">
-                <div class="stat-label">Phone</div>
-                <div class="stat-value" id="val-phone" style="color: var(--accent);">---</div>
+
+            <div class="glossy-card card-left">
+                <div class="stat-label">Total Left</div>
+                <div class="stat-value left-val" id="val-left">---</div>
+            </div>
+
+            <div class="glossy-card card-phone">
+                <div class="stat-label" style="margin:0; font-size: 1rem;">Phone Bill</div>
+                <div class="stat-value phone-val" id="val-phone" style="margin:0;">---</div>
             </div>
         </div>
 
-        <div class="alert-box">
+        <div class="glossy-card alert-box">
             <div class="alert-label">Mobile Games Price</div>
             <div class="alert-value" id="val-games">---</div>
+            <div class="alert-subtext">Stop wasting money!</div>
         </div>
+
     </div>
 
     <script>
@@ -101,45 +158,44 @@
             try {
                 const response = await fetch(csvUrl, { cache: "no-store" });
                 const text = await response.text();
-                
-                // 1. SPLIT ROWS
                 const rows = text.split(/\r?\n/);
                 
-                // 2. KEEP MONEY INTACT ("$1,611.31")
+                // COMMA-PROOF SPLIT
                 const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
                 
-                // FLATTEN DATA
                 let allData = [];
                 rows.forEach(row => {
-                    const parts = row.split(csvRegex).map(val => {
-                        return val.replace(/^"|"$/g, '').trim(); 
-                    });
+                    const parts = row.split(csvRegex).map(val => val.replace(/^"|"$/g, '').trim());
                     allData = allData.concat(parts);
                 });
 
-                // 3. SCAN FOR LABELS
                 for (let i = 0; i < allData.length; i++) {
                     const label = allData[i].toLowerCase();
                     const value = allData[i+1]; 
 
                     if (!value) continue;
 
-                    // Pay -> $1,611.31
+                    // Pay
                     if (label === 'pay') {
                         document.getElementById('val-income').innerText = value;
                     }
 
-                    // Total Left -> $384.87
+                    // Monthly Bills
+                    if (label.includes('monthly bills')) {
+                        document.getElementById('val-bills').innerText = value;
+                    }
+
+                    // Total Left
                     if (label.includes('total left')) {
                         document.getElementById('val-left').innerText = value;
                     }
 
-                    // Phone -> $293.44
-                    if (label.includes('phone')) {
+                    // Phone
+                    if (label === 'phone' || label.includes('phone')) {
                         document.getElementById('val-phone').innerText = value;
                     }
 
-                    // Mobile Games -> $1,964.00
+                    // Mobile Games
                     if (label.includes('mobile games')) {
                         document.getElementById('val-games').innerText = value;
                     }

@@ -37,7 +37,7 @@
         .hero-label { font-size: 1.2rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: 700; margin-bottom: 5px; }
         .hero-value { font-size: 4.5rem; font-weight: 900; color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(182, 215, 168, 0.2); }
 
-        /* GRID: LEFT & SPEND */
+        /* GRID: LEFT & PHONE */
         .stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -83,8 +83,8 @@
                 <div class="stat-value" id="val-left" style="color: var(--green);">---</div>
             </div>
             <div class="stat-card" style="border-color: var(--accent);">
-                <div class="stat-label">Monthly Spend</div>
-                <div class="stat-value" id="val-spend" style="color: var(--accent);">---</div>
+                <div class="stat-label">Phone</div>
+                <div class="stat-value" id="val-phone" style="color: var(--accent);">---</div>
             </div>
         </div>
 
@@ -99,33 +99,28 @@
 
         async function updateDashboard() {
             try {
-                // Fetch fresh data
                 const response = await fetch(csvUrl, { cache: "no-store" });
                 const text = await response.text();
                 
-                // 1. SPLIT ROWS FIRST
+                // 1. SPLIT ROWS
                 const rows = text.split(/\r?\n/);
                 
-                // 2. REGEX SPLIT FOR MONEY
-                // This regex splits by comma ONLY if NOT inside quotes.
-                // It treats "$1,611.31" as one item.
+                // 2. KEEP MONEY INTACT ("$1,611.31")
                 const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
                 
-                // Flatten data into one list
+                // FLATTEN DATA
                 let allData = [];
                 rows.forEach(row => {
-                    // Split the row using the regex
                     const parts = row.split(csvRegex).map(val => {
-                        // Remove the quotes Google adds ("$1,611.31" -> $1,611.31)
                         return val.replace(/^"|"$/g, '').trim(); 
                     });
                     allData = allData.concat(parts);
                 });
 
-                // 3. SCAN THE DATA
+                // 3. SCAN FOR LABELS
                 for (let i = 0; i < allData.length; i++) {
                     const label = allData[i].toLowerCase();
-                    const value = allData[i+1]; // Grab value immediately to the right
+                    const value = allData[i+1]; 
 
                     if (!value) continue;
 
@@ -137,7 +132,11 @@
                     // Total Left -> $384.87
                     if (label.includes('total left')) {
                         document.getElementById('val-left').innerText = value;
-                        document.getElementById('val-spend').innerText = value;
+                    }
+
+                    // Phone -> $293.44
+                    if (label.includes('phone')) {
+                        document.getElementById('val-phone').innerText = value;
                     }
 
                     // Mobile Games -> $1,964.00
@@ -148,12 +147,11 @@
 
             } catch (e) {
                 console.error("Sync Error");
-                document.getElementById('val-income').innerText = "Err";
             }
         }
 
         updateDashboard();
-        setInterval(updateDashboard, 15000); // Live update every 15s
+        setInterval(updateDashboard, 15000); 
     </script>
 </body>
 </html>

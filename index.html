@@ -24,7 +24,7 @@
 
         .container { width: 100%; max-width: 450px; }
 
-        /* HERO: PAY */
+        /* 1. HERO (PAY) */
         .hero-box {
             text-align: center;
             padding: 50px 10px;
@@ -37,7 +37,7 @@
         .hero-label { font-size: 1.2rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: 700; margin-bottom: 5px; }
         .hero-value { font-size: 4.5rem; font-weight: 900; color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(182, 215, 168, 0.2); }
 
-        /* GRID: TOTAL LEFT */
+        /* 2. GRID (LEFT / SPEND) */
         .stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -55,7 +55,7 @@
         .stat-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
         .stat-value { font-size: 1.8rem; font-weight: 800; }
 
-        /* ALERT: MOBILE GAMES */
+        /* 3. ALERT (GAMES) */
         .alert-box {
             background: rgba(255, 68, 68, 0.15);
             border: 4px solid var(--red);
@@ -95,49 +95,51 @@
     </div>
 
     <script>
-        // Use the Sheet 1 Specific Link (gid=0)
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSrB-ETsmpGrefh9bQ-g2qy3BC6OyAKGFXHLwerPD_t4iBulrGz5gzaPCzEswBbKoCLuk24YRcDz5T_/pub?gid=0&single=true&output=csv';
 
         async function updateDashboard() {
             try {
                 const response = await fetch(csvUrl, { cache: "no-store" });
                 const data = await response.text();
-                
                 // Split rows
                 const rows = data.split(/\r?\n/).map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
 
+                // SEARCH EVERY ROW
                 rows.forEach(row => {
-                    // Check if row has data
-                    if (row.length < 2) return;
+                    // We iterate through every column in the row
+                    for (let i = 0; i < row.length; i++) {
+                        const cellText = row[i].toLowerCase();
 
-                    const label = row[0].toLowerCase(); // Column A
-                    const price = row[1];               // Column B (The Numbers)
+                        // 1. If we find "Pay", the money is in the NEXT column (i + 1)
+                        if (cellText === 'pay') {
+                            const val = row[i + 1];
+                            if (val) document.getElementById('val-income').innerText = val;
+                        }
 
-                    // 1. MATCH "Pay" in Col A -> Get Col B
-                    if (label === "pay") {
-                        document.getElementById('val-income').innerText = price;
-                    }
+                        // 2. If we find "total left", the money is in the NEXT column (i + 1)
+                        if (cellText.includes('total left')) {
+                            const val = row[i + 1];
+                            if (val) {
+                                document.getElementById('val-left').innerText = val;
+                                document.getElementById('val-spend').innerText = val;
+                            }
+                        }
 
-                    // 2. MATCH "total left" in Col A -> Get Col B
-                    if (label.includes("total left")) {
-                        document.getElementById('val-left').innerText = price;
-                        document.getElementById('val-spend').innerText = price;
-                    }
-
-                    // 3. MATCH "mobile games" in Col A -> Get Col B
-                    if (label.includes("mobile games")) {
-                        document.getElementById('val-games').innerText = price;
+                        // 3. If we find "mobile games", the money is in the NEXT column (i + 1)
+                        if (cellText.includes('mobile games')) {
+                            const val = row[i + 1];
+                            if (val) document.getElementById('val-games').innerText = val;
+                        }
                     }
                 });
 
             } catch (e) {
                 console.error("Sync Error");
-                document.getElementById('val-income').innerText = "ERROR";
             }
         }
 
         updateDashboard();
-        setInterval(updateDashboard, 30000); // Live refresh every 30s
+        setInterval(updateDashboard, 30000); // Update every 30s
     </script>
 </body>
 </html>

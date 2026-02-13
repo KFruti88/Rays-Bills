@@ -3,41 +3,43 @@
 
     async function update() {
         try {
-            const response = await fetch(csvUrl);
+            const response = await fetch(csvUrl, { cache: "no-cache" });
             const data = await response.text();
-            const rows = data.split('\n').map(r => r.split(','));
+            
+            // Clean the data: Split into rows and strip quotes/hidden line breaks
+            const rows = data.split(/\r?\n/).map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
 
-            // FIND THE INCOME ROW DYNAMICALLY
-            const payRow = rows.find(r => r[0] && r[0].toLowerCase().trim() === 'pay');
-            
-            // TARGET COLUMN C (Index 2)
-            const c2Value = (payRow && payRow[2]) ? payRow[2].replace(/"/g, '').trim() : "$0.00";
-            
-            // UPDATE THE BIG DISPLAY
-            document.getElementById('target-c2').innerText = c2Value;
+            // 1. DIRECT TARGET: Total Monthly Income (C2)
+            // Coordination: Row Index 1, Column Index 2
+            const incomeValue = rows[1][2];
+            document.getElementById('income-target').innerText = incomeValue;
 
-            // LIST BILLS (Looking for specific labels in rows 4-12 range)
-            const list = document.getElementById('bill-list');
-            list.innerHTML = '';
-            
-            const billLabels = ['rent', 'storage', 'auto in', 'phone', 'fuel', 'verizon', 't-mobile'];
-            
+            // 2. SCAN FOR TEXT LABELS FOR THE REMAINING BOXES
             rows.forEach(row => {
-                const label = (row[0] || "").toLowerCase().trim();
-                const amt = (row[1] || "").trim();
-                
-                if (billLabels.includes(label) && amt && amt !== "0" && amt !== "$0.00") {
-                    list.innerHTML += `
-                        <div class="bill-card">
-                            <span class="bill-name" style="text-transform: capitalize;">${label}</span>
-                            <span class="bill-val">-${amt.replace(/"/g, '')}</span>
-                        </div>`;
+                const label = row[0] ? row[0].toLowerCase() : "";
+
+                // Target: Total Left from Bills ($384.87)
+                if (label.includes("total left")) {
+                    const val = row[1] || row[2];
+                    document.getElementById('left-target').innerText = val;
+                    document.getElementById('spend-target').innerText = val;
+                }
+
+                // Target: Mobile Games Price ($1,964.00)
+                if (label.includes("mobile games")) {
+                    document.getElementById('games-target').innerText = row[1] || row[2];
                 }
             });
+
         } catch (e) {
-            document.getElementById('target-c2').innerText = "OFFLINE";
+            console.error("Fetch failed");
+            document.getElementById('income-target').innerText = "OFFLINE";
         }
     }
 
+    // Run the update
     update();
+
+    // Auto-refresh every 30 seconds to stay synced with your sheet
+    setInterval(update, 30000);
 </script>

@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>Ray's Budget</title>
+    <title>Ray's Dashboard</title>
     <style>
         :root {
             --bg: #050505;
-            --green: #b6d7a8; 
-            --red: #ea9999;   
+            --green: #b6d7a8;
+            --accent: #00ffcc;
+            --red: #ff4444;
             --text: #ffffff;
         }
 
@@ -19,50 +18,77 @@
             font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 10px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { width: 90%; max-width: 400px; }
+        .container { width: 90%; max-width: 450px; }
 
-        /* The Big Total - EXACTLY C2 */
-        .total-box {
-            border: 2px solid var(--green);
-            border-radius: 20px;
-            padding: 40px 10px;
+        /* TIER 1: THE 1611.31 (THE HERO) */
+        .income-hero {
             text-align: center;
-            margin-bottom: 30px;
-            background: rgba(182, 215, 168, 0.05);
+            padding: 50px 0;
+            border-bottom: 3px solid var(--green);
+            margin-bottom: 25px;
         }
+        .hero-label { font-size: 1rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: bold; }
+        .hero-val { font-size: 5rem; font-weight: 900; color: var(--green); margin: 0; text-shadow: 0 0 20px rgba(182, 215, 168, 0.4); }
 
-        .label { font-size: 0.8rem; text-transform: uppercase; color: #888; }
-        .big-price { font-size: 3.5rem; font-weight: 900; color: var(--green); margin: 10px 0; }
-
-        /* The Bills - Rows 4-12 */
-        .bill-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px;
-            background: rgba(255,255,255,0.03);
-            margin-bottom: 8px;
-            border-radius: 12px;
+        /* TIER 2: SECONDARY NUMBERS */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 25px;
         }
-        .bill-price { color: var(--red); font-family: monospace; font-weight: bold; }
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px 5px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card-label { font-size: 0.75rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
+        .card-val { font-size: 2rem; font-weight: bold; }
+
+        /* TIER 3: MOBILE GAMES RED ALERT */
+        .alert-box {
+            background: rgba(255, 68, 68, 0.15);
+            border: 4px solid var(--red);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.5);
+        }
+        .alert-label { font-size: 1.2rem; font-weight: 900; color: var(--red); text-transform: uppercase; margin-bottom: 10px; }
+        .alert-price { font-size: 3.2rem; font-weight: 900; color: #ffffff; }
+
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="total-box">
-            <div class="label">Total Monthly Income</div>
-            <div class="big-price" id="c2-target">Loading...</div>
+        <div class="income-hero">
+            <div class="hero-label">Total Monthly Income</div>
+            <div class="hero-val" id="income-main">$1,611.31</div>
         </div>
 
-        <div class="label" style="margin-bottom:10px;">Current Bills</div>
-        <div id="bill-list"></div>
+        <div class="stat-grid">
+            <div class="stat-card" style="border-color: var(--green);">
+                <div class="card-label">Total Left</div>
+                <div class="card-val" id="left-val" style="color: var(--green);">$384.87</div>
+            </div>
+            <div class="stat-card" style="border-color: var(--accent);">
+                <div class="card-label">Monthly Spend</div>
+                <div class="card-val" id="spend-val" style="color: var(--accent);">$384.87</div>
+            </div>
+        </div>
+
+        <div class="alert-box">
+            <div class="alert-label">Mobile Games Price</div>
+            <div class="alert-price" id="games-val">$1,964.00</div>
+        </div>
     </div>
 
     <script>
@@ -72,26 +98,29 @@
             try {
                 const response = await fetch(csvUrl);
                 const data = await response.text();
+                // Split rows and clean all cells
                 const rows = data.split('\n').map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
 
-                // TARGET C2: Row Index 1, Column Index 2
-                // This is the SUM(B2,B3) value.
-                document.getElementById('c2-target').innerText = rows[1][2];
+                // 1. FORCE THE 1611.31: It lives in Row 2, Column C [Index 1, 2]
+                document.getElementById('income-main').innerText = rows[1][2];
 
-                // TARGET BILLS: Rows 4 to 12 (Index 3 to 11)
-                const list = document.getElementById('bill-list');
-                list.innerHTML = '';
-                for (let i = 3; i <= 11; i++) {
-                    if (rows[i] && rows[i][0] && rows[i][1]) {
-                        list.innerHTML += `
-                            <div class="bill-item">
-                                <span>${rows[i][0]}</span>
-                                <span class="bill-price">-${rows[i][1]}</span>
-                            </div>`;
+                // 2. SEARCH FOR OTHER TEXT LABELS
+                rows.forEach(row => {
+                    const label = row[0] ? row[0].toLowerCase() : "";
+
+                    if (label.includes("total left")) {
+                        const val = row[1] || row[2];
+                        document.getElementById('left-val').innerText = val;
+                        document.getElementById('spend-val').innerText = val;
                     }
-                }
-            } catch (e) {
-                document.getElementById('c2-target').innerText = "ERROR";
+
+                    if (label.includes("mobile games")) {
+                        document.getElementById('games-val').innerText = row[1] || row[2];
+                    }
+                });
+
+            } catch (err) {
+                document.getElementById('income-main').innerText = "OFFLINE";
             }
         }
 

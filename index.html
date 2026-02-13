@@ -15,26 +15,29 @@
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            margin: 0; padding: 10px;
+            margin: 0; padding: 15px;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { width: 90%; max-width: 450px; }
+        .container { width: 100%; max-width: 450px; }
 
-        /* TIER 1: THE 1611.31 (THE HERO) */
-        .income-hero {
+        /* HERO: PAY */
+        .hero-box {
             text-align: center;
-            padding: 50px 0;
-            border-bottom: 3px solid var(--green);
+            padding: 50px 10px;
+            border: 4px solid var(--green);
+            border-radius: 25px;
+            background: rgba(182, 215, 168, 0.05);
             margin-bottom: 25px;
+            box-shadow: 0 0 30px rgba(182, 215, 168, 0.15);
         }
-        .hero-label { font-size: 1rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: bold; }
-        .hero-val { font-size: 5rem; font-weight: 900; color: var(--green); margin: 0; text-shadow: 0 0 20px rgba(182, 215, 168, 0.4); }
+        .hero-label { font-size: 1.2rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: 700; margin-bottom: 5px; }
+        .hero-value { font-size: 4.5rem; font-weight: 900; color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(182, 215, 168, 0.2); }
 
-        /* TIER 2: SECONDARY NUMBERS */
+        /* GRID: TOTAL LEFT */
         .stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -43,88 +46,98 @@
             margin-bottom: 25px;
         }
         .stat-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 25px 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px 5px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .card-label { font-size: 0.75rem; color: #666; text-transform: uppercase; margin-bottom: 5px; }
-        .card-val { font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; }
 
-        /* TIER 3: MOBILE GAMES RED ALERT */
+        /* ALERT: MOBILE GAMES */
         .alert-box {
             background: rgba(255, 68, 68, 0.15);
             border: 4px solid var(--red);
-            border-radius: 24px;
-            padding: 30px;
+            border-radius: 20px;
+            padding: 25px;
             text-align: center;
-            box-shadow: 0 0 25px rgba(255, 68, 68, 0.5);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.2);
         }
-        .alert-label { font-size: 1.2rem; font-weight: 900; color: var(--red); text-transform: uppercase; margin-bottom: 10px; }
-        .alert-price { font-size: 3.2rem; font-weight: 900; color: #ffffff; }
+        .alert-label { font-size: 1.1rem; font-weight: 900; color: var(--red); text-transform: uppercase; }
+        .alert-value { font-size: 3rem; font-weight: 900; color: #ffffff; }
 
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="income-hero">
-            <div class="hero-label">Total Monthly Income</div>
-            <div class="hero-val" id="income-main">$1,611.31</div>
+        <div class="hero-box">
+            <div class="hero-label">Pay</div>
+            <div class="hero-value" id="val-income">Loading...</div>
         </div>
 
         <div class="stat-grid">
             <div class="stat-card" style="border-color: var(--green);">
-                <div class="card-label">Total Left</div>
-                <div class="card-val" id="left-val" style="color: var(--green);">$384.87</div>
+                <div class="stat-label">Total Left</div>
+                <div class="stat-value" id="val-left" style="color: var(--green);">---</div>
             </div>
             <div class="stat-card" style="border-color: var(--accent);">
-                <div class="card-label">Monthly Spend</div>
-                <div class="card-val" id="spend-val" style="color: var(--accent);">$384.87</div>
+                <div class="stat-label">Monthly Spend</div>
+                <div class="stat-value" id="val-spend" style="color: var(--accent);">---</div>
             </div>
         </div>
 
         <div class="alert-box">
             <div class="alert-label">Mobile Games Price</div>
-            <div class="alert-price" id="games-val">$1,964.00</div>
+            <div class="alert-value" id="val-games">---</div>
         </div>
     </div>
 
     <script>
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSrB-ETsmpGrefh9bQ-g2qy3BC6OyAKGFXHLwerPD_t4iBulrGz5gzaPCzEswBbKoCLuk24YRcDz5T_/pub?output=csv';
+        // Use the Sheet 1 Specific Link (gid=0)
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSrB-ETsmpGrefh9bQ-g2qy3BC6OyAKGFXHLwerPD_t4iBulrGz5gzaPCzEswBbKoCLuk24YRcDz5T_/pub?gid=0&single=true&output=csv';
 
-        async function update() {
+        async function updateDashboard() {
             try {
-                const response = await fetch(csvUrl);
+                const response = await fetch(csvUrl, { cache: "no-store" });
                 const data = await response.text();
-                // Split rows and clean all cells
-                const rows = data.split('\n').map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
+                
+                // Split rows
+                const rows = data.split(/\r?\n/).map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
 
-                // 1. FORCE THE 1611.31: It lives in Row 2, Column C [Index 1, 2]
-                document.getElementById('income-main').innerText = rows[1][2];
-
-                // 2. SEARCH FOR OTHER TEXT LABELS
                 rows.forEach(row => {
-                    const label = row[0] ? row[0].toLowerCase() : "";
+                    // Check if row has data
+                    if (row.length < 2) return;
 
-                    if (label.includes("total left")) {
-                        const val = row[1] || row[2];
-                        document.getElementById('left-val').innerText = val;
-                        document.getElementById('spend-val').innerText = val;
+                    const label = row[0].toLowerCase(); // Column A
+                    const price = row[1];               // Column B (The Numbers)
+
+                    // 1. MATCH "Pay" in Col A -> Get Col B
+                    if (label === "pay") {
+                        document.getElementById('val-income').innerText = price;
                     }
 
+                    // 2. MATCH "total left" in Col A -> Get Col B
+                    if (label.includes("total left")) {
+                        document.getElementById('val-left').innerText = price;
+                        document.getElementById('val-spend').innerText = price;
+                    }
+
+                    // 3. MATCH "mobile games" in Col A -> Get Col B
                     if (label.includes("mobile games")) {
-                        document.getElementById('games-val').innerText = row[1] || row[2];
+                        document.getElementById('val-games').innerText = price;
                     }
                 });
 
-            } catch (err) {
-                document.getElementById('income-main').innerText = "OFFLINE";
+            } catch (e) {
+                console.error("Sync Error");
+                document.getElementById('val-income').innerText = "ERROR";
             }
         }
 
-        update();
+        updateDashboard();
+        setInterval(updateDashboard, 30000); // Live refresh every 30s
     </script>
 </body>
 </html>

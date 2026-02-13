@@ -24,7 +24,7 @@
 
         .container { width: 100%; max-width: 450px; }
 
-        /* 1. HERO (PAY) */
+        /* HERO: PAY */
         .hero-box {
             text-align: center;
             padding: 50px 10px;
@@ -37,7 +37,7 @@
         .hero-label { font-size: 1.2rem; text-transform: uppercase; color: #888; letter-spacing: 3px; font-weight: 700; margin-bottom: 5px; }
         .hero-value { font-size: 4.5rem; font-weight: 900; color: var(--green); line-height: 1; text-shadow: 0 0 20px rgba(182, 215, 168, 0.2); }
 
-        /* 2. GRID (LEFT / SPEND) */
+        /* GRID: LEFT & SPEND */
         .stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -55,7 +55,7 @@
         .stat-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
         .stat-value { font-size: 1.8rem; font-weight: 800; }
 
-        /* 3. ALERT (GAMES) */
+        /* ALERT: GAMES */
         .alert-box {
             background: rgba(255, 68, 68, 0.15);
             border: 4px solid var(--red);
@@ -99,47 +99,61 @@
 
         async function updateDashboard() {
             try {
+                // Fetch fresh data
                 const response = await fetch(csvUrl, { cache: "no-store" });
-                const data = await response.text();
-                // Split rows
-                const rows = data.split(/\r?\n/).map(r => r.split(',').map(c => c.replace(/"/g, '').trim()));
-
-                // SEARCH EVERY ROW
+                const text = await response.text();
+                
+                // 1. SPLIT ROWS FIRST
+                const rows = text.split(/\r?\n/);
+                
+                // 2. REGEX SPLIT FOR MONEY
+                // This regex splits by comma ONLY if NOT inside quotes.
+                // It treats "$1,611.31" as one item.
+                const csvRegex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+                
+                // Flatten data into one list
+                let allData = [];
                 rows.forEach(row => {
-                    // We iterate through every column in the row
-                    for (let i = 0; i < row.length; i++) {
-                        const cellText = row[i].toLowerCase();
-
-                        // 1. If we find "Pay", the money is in the NEXT column (i + 1)
-                        if (cellText === 'pay') {
-                            const val = row[i + 1];
-                            if (val) document.getElementById('val-income').innerText = val;
-                        }
-
-                        // 2. If we find "total left", the money is in the NEXT column (i + 1)
-                        if (cellText.includes('total left')) {
-                            const val = row[i + 1];
-                            if (val) {
-                                document.getElementById('val-left').innerText = val;
-                                document.getElementById('val-spend').innerText = val;
-                            }
-                        }
-
-                        // 3. If we find "mobile games", the money is in the NEXT column (i + 1)
-                        if (cellText.includes('mobile games')) {
-                            const val = row[i + 1];
-                            if (val) document.getElementById('val-games').innerText = val;
-                        }
-                    }
+                    // Split the row using the regex
+                    const parts = row.split(csvRegex).map(val => {
+                        // Remove the quotes Google adds ("$1,611.31" -> $1,611.31)
+                        return val.replace(/^"|"$/g, '').trim(); 
+                    });
+                    allData = allData.concat(parts);
                 });
+
+                // 3. SCAN THE DATA
+                for (let i = 0; i < allData.length; i++) {
+                    const label = allData[i].toLowerCase();
+                    const value = allData[i+1]; // Grab value immediately to the right
+
+                    if (!value) continue;
+
+                    // Pay -> $1,611.31
+                    if (label === 'pay') {
+                        document.getElementById('val-income').innerText = value;
+                    }
+
+                    // Total Left -> $384.87
+                    if (label.includes('total left')) {
+                        document.getElementById('val-left').innerText = value;
+                        document.getElementById('val-spend').innerText = value;
+                    }
+
+                    // Mobile Games -> $1,964.00
+                    if (label.includes('mobile games')) {
+                        document.getElementById('val-games').innerText = value;
+                    }
+                }
 
             } catch (e) {
                 console.error("Sync Error");
+                document.getElementById('val-income').innerText = "Err";
             }
         }
 
         updateDashboard();
-        setInterval(updateDashboard, 30000); // Update every 30s
+        setInterval(updateDashboard, 15000); // Live update every 15s
     </script>
 </body>
 </html>
